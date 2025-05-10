@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>星辰塔罗日运</title>
+    <style>
+        :root {
+            --purple-dark: #1a103d;
+            --purple-mid: #3d2e8f;
+            --purple-light: #6a4cbf;
+            --gold: #f8d56b;
+            --pink: #e6a8d7;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: radial-gradient(circle at 10% 20%, var(--purple-dark) 0%, #000 60%);
+            color: #e6e6e6;
+            min-height: 100vh;
+            padding: 15px;
+            margin: 0;
+            line-height: 1.5;
+            -webkit-text-size-adjust: 100%;
+        }
+        
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 10px;
+        }
+        
+        h1 {
+            color: var(--gold);
+            text-align: center;
+            margin: 15px 0;
+            font-size: 1.8rem;
+        }
+        
+        .settings {
+            background: rgba(61, 46, 143, 0.3);
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 0.95rem;
+        }
+        
+        .btn {
+            background: var(--purple-light);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1rem;
+            border-radius: 50px;
+            cursor: pointer;
+            display: block;
+            margin: 20px auto;
+            transition: all 0.3s;
+            width: 80%;
+            max-width: 250px;
+            font-weight: bold;
+        }
+        
+        .btn:hover {
+            background: var(--purple-mid);
+            transform: translateY(-3px);
+        }
+        
+        .btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+        
+        .card-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+            perspective: 1000px;
+        }
+        
+        .card {
+            width: 28vw;
+            height: 48vw;
+            max-width: 120px;
+            max-height: 200px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.8s;
+            cursor: pointer;
+            border-radius: 8px;
+            margin: 5px;
+        }
+        
+        .card.flipped {
+            transform: rotateY(180deg);
+        }
+        
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            padding: 8px;
+            text-align: center;
+        }
+        
+        .card-front {
+            background: linear-gradient(135deg, #f8d56b 0%, #e6a8d7 100%);
+            color: var(--purple-dark);
+            transform: rotateY(180deg);
+        }
+        
+        .card-back {
+            background: linear-gradient(135deg, var(--purple-mid) 0%, var(--purple-dark) 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .card-back::before {
+            content: "";
+            position: absolute;
+            width: 80%;
+            height: 80%;
+            border: 2px solid var(--gold);
+            border-radius: 6px;
+            opacity: 0.5;
+        }
+        
+        .card-back::after {
+            content: "✦";
+            font-size: 30px;
+            color: var(--gold);
+            opacity: 0.7;
+        }
+        
+        .card-name {
+            font-size: 0.85rem;
+            font-weight: bold;
+            margin-bottom: 4px;
+            word-break: break-word;
+        }
+        
+        .card-suit {
+            font-size: 0.7rem;
+            font-style: italic;
+            margin-bottom: 4px;
+        }
+        
+        .card-orientation {
+            font-size: 0.75rem;
+            color: var(--purple-mid);
+            font-weight: bold;
+        }
+        
+        .reading-area {
+            background: rgba(26, 16, 61, 0.7);
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 20px;
+            transition: all 0.5s ease-in-out;
+            font-size: 0.95rem;
+        }
+        
+        .category {
+            margin-bottom: 18px;
+        }
+        
+        .category-title {
+            color: var(--gold);
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .category-title .icon {
+            margin-right: 8px;
+            font-size: 1em;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .error {
+            color: #ff6b6b;
+            text-align: center;
+            margin: 15px 0;
+            font-size: 0.95rem;
+        }
+        
+        @keyframes dealCard {
+            0% {
+                transform: translateY(-50px) rotateY(-90deg);
+                opacity: 0;
+            }
+            100% {
+                transform: translateY(0) rotateY(0);
+                opacity: 1;
+            }
+        }
+        
+        .card.dealing {
+            animation: dealCard 0.8s ease-out forwards;
+        }
+        
+        /* 综合解读样式 */
+        .overall-reading {
+            background: rgba(106, 76, 191, 0.2);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--gold);
+        }
+        
+        .overall-title {
+            color: var(--gold);
+            font-size: 1.2rem;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .energy-bar-container {
+            margin: 12px 0;
+        }
+        
+        .energy-bar {
+            height: 18px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 9px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .energy-level {
+            height: 100%;
+            background: linear-gradient(90deg, #f44336, #FFC107, #4CAF50);
+            transition: width 1s ease;
+            border-radius: 9px;
+        }
+        
+        .energy-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 5px;
+            font-size: 0.75rem;
+            color: rgba(255,255,255,0.7);
+        }
+        
+        .element-tags {
+            display: flex;
+            gap: 6px;
+            margin: 8px 0;
+            flex-wrap: wrap;
+        }
+        
+        .element-tag {
+            background: rgba(248, 213, 107, 0.2);
+            border: 1px solid var(--gold);
+            border-radius: 12px;
+            padding: 2px 8px;
+            font-size: 0.75rem;
+        }
+        
+        .advice-box {
+            background: rgba(230, 168, 215, 0.1);
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 12px;
+            border-left: 3px solid var(--pink);
+        }
+        
+        .advice-title {
+            color: var(--pink);
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+        
+        /* 响应式调整 */
+        @media (max-width: 480px) {
+            .card {
+                width: 30vw;
+                height: 50vw;
+            }
+            
+            .card-name {
+                font-size: 0.8rem;
+            }
+            
+            .reading-area {
+                padding: 12px;
+            }
+            
+            .btn {
+                width: 90%;
+                padding: 12px;
+            }
+        }
+        
+        @media (max-width: 360px) {
+            .card {
+                width: 28vw;
+                height: 48vw;
+            }
+            
+            .card-name {
+                font-size: 0.75rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✨ 塔罗日运占卜 ✨</h1>
+        
+        <div class="settings">
+            <label>
+                <input type="radio" name="deckType" value="full" checked> 使用完整78张牌组
+            </label>
+        </div>
+        
+        <button id="drawBtn" class="btn">抽取今日运势</button>
+        
+        <div id="cardDisplay" class="card-container hidden"></div>
+        
+        <div id="errorMsg" class="error hidden"></div>
+        
+        <div id="readingDisplay" class="reading-area hidden">
+            <div class="overall-reading">
+                <div class="overall-title">
+                    <span class="icon">🔮</span>今日综合运势
+                </div>
+                <div id="overallReading"></div>
+                <div class="energy-bar-container">
+                    <div class="energy-bar">
+                        <div class="energy-level" id="energyLevel"></div>
+                    </div>
+                    <div class="energy-labels">
+                        <span>低能量</span>
+                        <span>中能量</span>
+                        <span>高能量</span>
+                    </div>
+                </div>
+                <div class="element-tags" id="elementTags"></div>
+                <div class="advice-box">
+                    <div class="advice-title">✨ 今日箴言</div>
+                    <div id="dailyAdvice"></div>
+                </div>
+            </div>
+            
+            <div class="category">
+                <div class="category-title">
+                    <span class="icon">🏢</span>工作运势
+                </div>
+                <div id="workReading"></div>
+            </div>
+            
+            <div class="category">
+                <div class="category-title">
+                    <span class="icon">❤️</span>情感状态
+                </div>
+                <div id="loveReading"></div>
+            </div>
+            
+            <div class="category">
+                <div class="category-title">
+                    <span class="icon">📚</span>学习能量
+                </div>
+                <div id="studyReading"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 塔罗牌数据库
+        const tarotDB = {
+            major: [
+                { name: "0. 愚者", keywords: ["冒险", "天真", "新的开始"], element: "风" },
+                { name: "I. 魔术师", keywords: ["创造", "技能", "专注"], element: "水星" },
+                { name: "II. 女祭司", keywords: ["直觉", "神秘", "智慧"], element: "月亮" },
+                { name: "III. 皇后", keywords: ["丰盛", "滋养", "感性"], element: "金星" },
+                { name: "IV. 皇帝", keywords: ["权威", "结构", "控制"], element: "白羊座" },
+                { name: "V. 教皇", keywords: ["传统", "信仰", "教育"], element: "金牛座" },
+                { name: "VI. 恋人", keywords: ["关系", "选择", "和谐"], element: "双子座" },
+                { name: "VII. 战车", keywords: ["胜利", "意志力", "前进"], element: "巨蟹座" },
+                { name: "VIII. 力量", keywords: ["勇气", "耐心", "内在力量"], element: "狮子座" },
+                { name: "IX. 隐士", keywords: ["内省", "孤独", "指引"], element: "处女座" },
+                { name: "X. 命运之轮", keywords: ["命运", "变化", "周期"], element: "木星" },
+                { name: "XI. 正义", keywords: ["公平", "真相", "因果"], element: "天秤座" },
+                { name: "XII. 倒吊人", keywords: ["牺牲", "新视角", "等待"], element: "水" },
+                { name: "XIII. 死神", keywords: ["结束", "转变", "新生"], element: "天蝎座" },
+                { name: "XIV. 节制", keywords: ["平衡", "调和", "适度"], element: "射手座" },
+                { name: "XV. 恶魔", keywords: ["束缚", "物质", "欲望"], element: "摩羯座" },
+                { name: "XVI. 高塔", keywords: ["突变", "启示", "解放"], element: "火星" },
+                { name: "XVII. 星星", keywords: ["希望", "灵感", "治愈"], element: "水瓶座" },
+                { name: "XVIII. 月亮", keywords: ["幻觉", "潜意识", "不安"], element: "双鱼座" },
+                { name: "XIX. 太阳", keywords: ["快乐", "成功", "活力"], element: "太阳" },
+                { name: "XX. 审判", keywords: ["觉醒", "重生", "赦免"], element: "火" },
+                { name: "XXI. 世界", keywords: ["完成", "成就", "旅行"], element: "土星" }
+            ],
+            minor: {
+                wands: [
+                    { name: "权杖一", keywords: ["能量", "灵感", "行动"], number: 1, element: "火" },
+                    { name: "权杖二", keywords: ["计划", "未来", "决定"], number: 2, element: "火" },
+                    { name: "权杖三", keywords: ["远见", "扩张", "领导"], number: 3, element: "火" },
+                    { name: "权杖四", keywords: ["庆祝", "和谐", "家"], number: 4, element: "火" },
+                    { name: "权杖五", keywords: ["冲突", "竞争", "争论"], number: 5, element: "火" },
+                    { name: "权杖六", keywords: ["胜利", "进步", "认可"], number: 6, element: "火" },
+                    { name: "权杖七", keywords: ["挑战", "坚持", "防御"], number: 7, element: "火" },
+                    { name: "权杖八", keywords: ["速度", "行动", "消息"], number: 8, element: "火" },
+                    { name: "权杖九", keywords: ["毅力", "警惕", "力量"], number: 9, element: "火" },
+                    { name: "权杖十", keywords: ["负担", "责任", "压力"], number: 10, element: "火" },
+                    { name: "权杖侍从", keywords: ["探索", "热情", "消息"], court: "侍从", element: "火" },
+                    { name: "权杖骑士", keywords: ["能量", "冒险", "冲动"], court: "骑士", element: "火" },
+                    { name: "权杖皇后", keywords: ["活力", "自信", "温暖"], court: "皇后", element: "火" },
+                    { name: "权杖国王", keywords: ["领导", "远见", "企业家"], court: "国王", element: "火" }
+                ],
+                cups: [
+                    { name: "圣杯一", keywords: ["情感", "直觉", "新关系"], number: 1, element: "水" },
+                    { name: "圣杯二", keywords: ["和谐", "合作", "感情"], number: 2, element: "水" },
+                    { name: "圣杯三", keywords: ["庆祝", "友谊", "创造力"], number: 3, element: "水" },
+                    { name: "圣杯四", keywords: ["沉思", "不满", "无聊"], number: 4, element: "水" },
+                    { name: "圣杯五", keywords: ["失落", "遗憾", "悲伤"], number: 5, element: "水" },
+                    { name: "圣杯六", keywords: ["怀旧", "童年", "礼物"], number: 6, element: "水" },
+                    { name: "圣杯七", keywords: ["选择", "幻想", "白日梦"], number: 7, element: "水" },
+                    { name: "圣杯八", keywords: ["离开", "寻找", "放弃"], number: 8, element: "水" },
+                    { name: "圣杯九", keywords: ["满足", "愿望", "快乐"], number: 9, element: "水" },
+                    { name: "圣杯十", keywords: ["幸福", "家庭", "和谐"], number: 10, element: "水" },
+                    { name: "圣杯侍从", keywords: ["敏感", "创意", "直觉"], court: "侍从", element: "水" },
+                    { name: "圣杯骑士", keywords: ["浪漫", "魅力", "理想主义"], court: "骑士", element: "水" },
+                    { name: "圣杯皇后", keywords: ["同情", "关怀", "治愈"], court: "皇后", element: "水" },
+                    { name: "圣杯国王", keywords: ["智慧", "情感控制", "导师"], court: "国王", element: "水" }
+                ],
+                swords: [
+                    { name: "宝剑一", keywords: ["突破", "清晰", "真理"], number: 1, element: "风" },
+                    { name: "宝剑二", keywords: ["选择", "平衡", "僵局"], number: 2, element: "风" },
+                    { name: "宝剑三", keywords: ["心碎", "悲伤", "痛苦"], number: 3, element: "风" },
+                    { name: "宝剑四", keywords: ["休息", "恢复", "沉思"], number: 4, element: "风" },
+                    { name: "宝剑五", keywords: ["冲突", "胜利", "争论"], number: 5, element: "风" },
+                    { name: "宝剑六", keywords: ["过渡", "离开", "治愈"], number: 6, element: "风" },
+                    { name: "宝剑七", keywords: ["欺骗", "策略", "秘密"], number: 7, element: "风" },
+                    { name: "宝剑八", keywords: ["限制", "无助", "自我束缚"], number: 8, element: "风" },
+                    { name: "宝剑九", keywords: ["焦虑", "噩梦", "恐惧"], number: 9, element: "风" },
+                    { name: "宝剑十", keywords: ["结束", "痛苦", "重生"], number: 10, element: "风" },
+                    { name: "宝剑侍从", keywords: ["警觉", "好奇", "新想法"], court: "侍从", element: "风" },
+                    { name: "宝剑骑士", keywords: ["行动", "冲动", "决心"], court: "骑士", element: "风" },
+                    { name: "宝剑皇后", keywords: ["独立", "清晰", "公正"], court: "皇后", element: "风" },
+                    { name: "宝剑国王", keywords: ["权威", "逻辑", "决断"], court: "国王", element: "风" }
+                ],
+                pentacles: [
+                    { name: "星币一", keywords: ["繁荣", "新机会", "安全"], number: 1, element: "土" },
+                    { name: "星币二", keywords: ["平衡", "适应", "资源"], number: 2, element: "土" },
+                    { name: "星币三", keywords: ["团队合作", "学习", "技能"], number: 3, element: "土" },
+                    { name: "星币四", keywords: ["保存", "安全", "控制"], number: 4, element: "土" },
+                    { name: "星币五", keywords: ["困难", "贫困", "孤立"], number: 5, element: "土" },
+                    { name: "星币六", keywords: ["慷慨", "慈善", "分享"], number: 6, element: "土" },
+                    { name: "星币七", keywords: ["评估", "耐心", "投资"], number: 7, element: "土" },
+                    { name: "星币八", keywords: ["工艺", "专注", "质量"], number: 8, element: "土" },
+                    { name: "星币九", keywords: ["丰富", "独立", "享受"], number: 9, element: "土" },
+                    { name: "星币十", keywords: ["财富", "家庭", "传统"], number: 10, element: "土" },
+                    { name: "星币侍从", keywords: ["学习", "勤奋", "潜力"], court: "侍从", element: "土" },
+                    { name: "星币骑士", keywords: ["责任", "可靠", "进步"], court: "骑士", element: "土" },
+                    { name: "星币皇后", keywords: ["繁荣", "安全", "养育"], court: "皇后", element: "土" },
+                    { name: "星币国王", keywords: ["成功", "管理", "稳定"], court: "国王", element: "土" }
+                ]
+            }
+        };
+
+        // 生成牌组
+        function generateDeck(deckType) {
+            let deck = [];
+            
+            // 添加大阿卡纳
+            tarotDB.major.forEach(card => {
+                deck.push({
+                    ...card,
+                    type: "major",
+                    suit: null,
+                    work: generateGenericReading(card, "work"),
+                    love: generateGenericReading(card, "love"),
+                    study: generateGenericReading(card, "study")
+                });
+            });
+            
+            // 添加小阿卡纳
+            if (deckType === "full") {
+                for (const [suit, cards] of Object.entries(tarotDB.minor)) {
+                    cards.forEach(card => {
+                        deck.push({
+                            ...card,
+                            type: "minor",
+                            suit: suit,
+                            work: generateGenericReading(card, "work"),
+                            love: generateGenericReading(card, "love"),
+                            study: generateGenericReading(card, "study")
+                        });
+                    });
+                }
+            }
+            
+            return deck;
+        }
+
+        // 生成通用解读
+        function generateGenericReading(card, category) {
+            const orientation = {
+                upright: [],
+                reversed: []
+            };
+            
+            // 工作解读
+            if (category === "work") {
+                orientation.upright = [
+                    "工作进展顺利",
+                    "可能有新的机会",
+                    "团队合作良好"
+                ];
+                orientation.reversed = [
+                    "工作中遇到阻碍",
+                    "需要重新评估计划",
+                    "注意沟通问题"
+                ];
+            }
+            // 情感解读
+            else if (category === "love") {
+                orientation.upright = [
+                    "感情和谐",
+                    "可能有新的邂逅",
+                    "沟通顺畅"
+                ];
+                orientation.reversed = [
+                    "情感上需要更多关注",
+                    "可能存在误解",
+                    "需要更多耐心"
+                ];
+            }
+            // 学习解读
+            else if (category === "study") {
+                orientation.upright = [
+                    "学习效率高",
+                    "适合吸收新知识",
+                    "考试运佳"
+                ];
+                orientation.reversed = [
+                    "学习遇到瓶颈",
+                    "需要调整方法",
+                    "注意力不集中"
+                ];
+            }
+            
+            // 添加建议
+            orientation.advice = {
+                upright: "把握当下机会，积极行动",
+                reversed: "谨慎行事，三思而后行"
+            };
+            
+            return orientation;
+        }
+
+        // 洗牌算法
+        function shuffleDeck(deck) {
+            for (let i = deck.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [deck[i], deck[j]] = [deck[j], deck[i]];
+            }
+            return deck;
+        }
+
+        // 抽取牌组
+        function drawCards() {
+            try {
+                const deckType = document.querySelector('input[name="deckType"]:checked').value;
+                let deck = generateDeck(deckType);
+                
+                if (deck.length === 0) {
+                    throw new Error("牌组为空，请检查牌组数据");
+                }
+                
+                deck = shuffleDeck(deck);
+                
+                return deck.slice(0, 3).map(card => ({
+                    ...card,
+                    orientation: Math.random() > 0.5 ? "正位" : "逆位"
+                }));
+            } catch (error) {
+                console.error("抽牌出错:", error);
+                showError("抽牌失败，请刷新页面重试");
+                return [];
+            }
+        }
+
+        // 显示错误信息
+        function showError(message) {
+            const errorEl = document.getElementById("errorMsg");
+            errorEl.textContent = message;
+            errorEl.classList.remove("hidden");
+        }
+
+        // 隐藏错误信息
+        function hideError() {
+            document.getElementById("errorMsg").classList.add("hidden");
+        }
+
+        // 生成综合解读
+        function generateOverallReading(cards) {
+            const reading = {
+                elements: {},
+                overallEnergy: 50, // 默认50%
+                themes: []
+            };
+            
+            // 分析元素和正逆位
+            let uprightCount = 0;
+            cards.forEach(card => {
+                // 统计元素
+                if (card.element) {
+                    reading.elements[card.element] = (reading.elements[card.element] || 0) + 1;
+                }
+                
+                // 统计正逆位
+                if (card.orientation === "正位") {
+                    uprightCount++;
+                }
+                
+                // 收集关键词
+                reading.themes.push(...card.keywords);
+            });
+            
+            // 计算能量值 (0-100)
+            if (uprightCount === 3) {
+                reading.overallEnergy = 90;
+            } else if (uprightCount === 2) {
+                reading.overallEnergy = 70;
+            } else if (uprightCount === 1) {
+                reading.overallEnergy = 40;
+            } else {
+                reading.overallEnergy = 20;
+            }
+            
+            // 生成解读文本
+            reading.summary = generateSummaryText(uprightCount, reading.themes);
+            reading.elementAnalysis = generateElementAnalysis(reading.elements);
+            reading.advice = generateAdviceText(uprightCount);
+            
+            return reading;
+        }
+
+        // 生成总结文本
+        function generateSummaryText(uprightCount, themes) {
+            const uniqueThemes = [...new Set(themes)].slice(0, 3);
+            
+            if (uprightCount === 3) {
+                return `🌟 今日运势极佳！三张正位牌显示能量充沛，是推进计划的好时机。关键词：${uniqueThemes.join("、")}`;
+            } else if (uprightCount === 2) {
+                return `✨ 今日运势良好。两张正位牌显示整体顺利，但需留意逆位牌提示的领域。关键词：${uniqueThemes.join("、")}`;
+            } else if (uprightCount === 1) {
+                return `⏳ 今日运势平稳。需要平衡各方能量，逆位牌提示需留意的挑战。关键词：${uniqueThemes.join("、")}`;
+            } else {
+                return `🌙 今日需要谨慎。三张逆位牌提示需放慢脚步，反思调整后再行动。关键词：${uniqueThemes.join("、")}`;
+            }
+        }
+
+        // 生成元素分析
+        function generateElementAnalysis(elements) {
+            if (Object.keys(elements).length === 0) return "";
+            
+            const elementMeanings = {
+                "火": "行动力强，热情充沛",
+                "水": "情感丰富，直觉敏锐",
+                "风": "思维活跃，沟通顺畅",
+                "土": "务实稳定，财务良好",
+                "金星": "爱与美的能量",
+                "木星": "幸运与扩张",
+                "水星": "沟通与思维",
+                "月亮": "直觉与潜意识",
+                "太阳": "活力与成功",
+                "火星": "行动与勇气"
+            };
+            
+            const dominantElement = Object.entries(elements)
+                .sort((a, b) => b[1] - a[1])[0][0];
+            
+            return `主导元素 ${dominantElement}：${elementMeanings[dominantElement] || "能量平衡"}`;
+        }
+
+        // 生成建议文本
+        function generateAdviceText(uprightCount) {
+            if (uprightCount === 3) {
+                return "大胆追求目标，但要注意不要过度自信";
+            } else if (uprightCount === 2) {
+                return "把握机会同时留意潜在问题";
+            } else if (uprightCount === 1) {
+                return "重要决定请三思而后行";
+            } else {
+                return "建议放慢脚步，多反思而非行动";
+            }
+        }
+
+        // 显示牌组
+        function displayCards(cards) {
+            const cardDisplay = document.getElementById("cardDisplay");
+            cardDisplay.innerHTML = "";
+            
+            if (!cards || cards.length === 0) {
+                showError("未能成功抽牌");
+                return;
+            }
+            
+            hideError();
+            cardDisplay.classList.remove("hidden");
+            
+            cards.forEach((card, index) => {
+                const cardEl = document.createElement("div");
+                cardEl.className = "card dealing";
+                
+                let cardInfo = `
+                    <div class="card-face card-back"></div>
+                    <div class="card-face card-front">
+                        <div class="card-name">${card.name}</div>
+                `;
+                
+                if (card.suit) {
+                    cardInfo += `<div class="card-suit">${getSuitName(card.suit)}牌组</div>`;
+                }
+                
+                cardInfo += `
+                        <div class="card-orientation">${card.orientation}</div>
+                    </div>
+                `;
+                
+                cardEl.innerHTML = cardInfo;
+                cardDisplay.appendChild(cardEl);
+                
+                // 添加点击翻转功能
+                cardEl.addEventListener('click', function() {
+                    this.classList.toggle('flipped');
+                });
+                
+                // 自动翻转卡片
+                setTimeout(() => {
+                    cardEl.classList.remove('dealing');
+                    setTimeout(() => {
+                        cardEl.classList.add('flipped');
+                    }, index * 300);
+                }, 100);
+            });
+        }
+
+        // 获取花色名称
+        function getSuitName(suit) {
+            const suitNames = {
+                "wands": "权杖",
+                "cups": "圣杯",
+                "swords": "宝剑",
+                "pentacles": "星币"
+            };
+            return suitNames[suit] || suit;
+        }
+
+        // 显示解读
+        function displayReading(cards) {
+            try {
+                const reading = generateOverallReading(cards);
+                const categories = ["work", "love", "study"];
+                
+                // 显示综合解读
+                document.getElementById("overallReading").innerHTML = `
+                    <p>${reading.summary}</p>
+                    <p>${reading.elementAnalysis}</p>
+                `;
+                
+                // 显示能量条
+                document.getElementById("energyLevel").style.width = `${reading.overallEnergy}%`;
+                
+                // 显示元素标签
+                const elementTags = document.getElementById("elementTags");
+                elementTags.innerHTML = "";
+                Object.keys(reading.elements).forEach(element => {
+                    const tag = document.createElement("div");
+                    tag.className = "element-tag";
+                    tag.textContent = element;
+                    elementTags.appendChild(tag);
+                });
+                
+                // 显示今日箴言
+                document.getElementById("dailyAdvice").textContent = reading.advice;
+                
+                // 显示各领域解读
+                categories.forEach((category, index) => {
+                    const card = cards[index];
+                    const isUpright = card.orientation === "正位";
+                    const meanings = isUpright ? card[category].upright : card[category].reversed;
+                    const advice = card[category].advice[isUpright ? "upright" : "reversed"];
+                    
+                    document.getElementById(`${category}Reading`).innerHTML = `
+                        <p><strong>${card.name} ${card.orientation}</strong></p>
+                        <p>${meanings.join(" · ")}</p>
+                        <p><em>建议：${advice}</em></p>
+                    `;
+                });
+                
+                document.getElementById("readingDisplay").classList.remove("hidden");
+            } catch (error) {
+                console.error("解读生成失败:", error);
+                showError("解读生成失败，请重新抽牌");
+            }
+        }
+
+        // 主函数
+        document.getElementById("drawBtn").addEventListener("click", function() {
+            const btn = this;
+            btn.disabled = true;
+            btn.textContent = "正在抽牌...";
+            
+            // 清空之前的结果
+            document.getElementById("readingDisplay").classList.add("hidden");
+            hideError();
+            
+            setTimeout(() => {
+                try {
+                    const cards = drawCards();
+                    displayCards(cards);
+                    
+                    if (cards.length > 0) {
+                        setTimeout(() => {
+                            displayReading(cards);
+                        }, 1500);
+                    }
+                } catch (error) {
+                    console.error("抽牌流程出错:", error);
+                    showError("系统出错，请刷新页面重试");
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = "抽取今日运势";
+                }
+            }, 800);
+        });
+
+        // 禁止双击缩放 (针对移动端)
+        document.addEventListener('dblclick', function(e) {
+            e.preventDefault();
+        }, { passive: false });
+    </script>
+</body>
+</html>
